@@ -99,7 +99,7 @@
 import { mixin, mixinDevice } from '@/utils/mixin.js'
 import FilePondUpload from '@/components/Upload/FilePondUpload'
 import attachmentApi from '@/api/attachment'
-import directoryApi from '@/api/directory'
+import folder from '@/api/folder'
 import AttachmentPreview from '@/views/file/AttachmentPreview'
 export default {
   name: 'TableList',
@@ -168,23 +168,10 @@ export default {
 			if (path !== undefined) {
 				this.queryParam.path = path
 			}
-			directoryApi.query(Object.assign(this.queryParam)).then(res => {
-				this.localDataSource = []
-				for (var d = 0; d < res.data.directoryList.length; d++) {
-					var itemD = res.data.directoryList[d]
-					itemD.fileKey = itemD.id
-					itemD.isDirectory = true
-					itemD.active = false
-					this.localDataSource.push(itemD)
-				}
-				
-				for (var a = 0; a < res.data.attachmentList.length; a++) {
-					var itemA = res.data.attachmentList[a]
-					itemA.active = false
-					this.localDataSource.push(itemA)
-				}
+			folder.query(Object.assign(this.queryParam)).then(res => {
+				this.localDataSource = res.folderSub
 				this.paths = Object.assign({}, this.queryParam).path.split('/').slice(1)
-				this.parentPath = res.data.parent
+				this.parentPath = res.parent
 				this.loading = false
 			})
 		},
@@ -192,7 +179,7 @@ export default {
 			record.active = true
 		},
 		rowDblclick (record) {
-			if (record.isDirectory !== undefined & record.isDirectory) {
+			if (record.isFolder !== undefined & record.isFolder) {
 				this.getDataSource(record.path)
 				this.directoryHistory.splice(this.directoryCursor + 1, this.directoryHistory.length - this.directoryCursor, this.queryParam.path)
 				this.directoryCursor = this.directoryHistory.length - 1
@@ -209,14 +196,14 @@ export default {
 		handleRename() {
 			this.renameLoading = true
 			var record = this.cacheRecord
-			directoryApi.rename({ 'name': record.name, 'key': record.fileKey, 'path': this.queryParam.path, 'isDirectory': record.isDirectory }).then(res => {
+			folder.rename({ 'name': record.name, 'key': record.fileKey, 'path': this.queryParam.path, 'isFolder': record.isFolder }).then(res => {
 				this.getDataSource()
 				this.renameLoading = this.renameVisible = false
 			})
 		},
 		handleDelete() {
 			var record = this.cacheRecord
-			directoryApi.deleted({ 'key': record.fileKey, 'isDirectory': record.isDirectory }).then(res => {
+			folder.deleted({ 'key': record.fileKey, 'isFolder': record.isFolder }).then(res => {
 				this.getDataSource()
 			}).catch(e => {
 				this.$notification.error({

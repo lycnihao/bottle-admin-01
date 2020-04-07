@@ -1,10 +1,10 @@
 import { axios } from '@/utils/request'
 
-const baseUrl = 'http://localhost:8090/api/admin/directory'
+const baseUrl = 'http://localhost:8090/api/admin/folder'
 
-const directoryApi = {}
+const folderApi = {}
 
-directoryApi.query = params => {
+folderApi.query = params => {
   return axios({
     url: baseUrl,
     params: params,
@@ -12,7 +12,7 @@ directoryApi.query = params => {
   })
 }
 
-directoryApi.deleted = params => {
+folderApi.deleted = params => {
   return axios({
     url: baseUrl,
     params: params,
@@ -20,7 +20,7 @@ directoryApi.deleted = params => {
   })
 }
 
-directoryApi.rename = params => {
+folderApi.rename = params => {
   return axios({
     url: baseUrl + '/rename',
     params: params,
@@ -28,4 +28,4 @@ directoryApi.rename = params => {
   })
 }
 
-export default directoryApi
+export default folderApi
