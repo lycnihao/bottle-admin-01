@@ -9,7 +9,7 @@
 				<a-button shape="circle" icon="redo" @click="getDataSource(directoryHistory[directoryCursor])" :loading="loading"/>
 			</div>
       <a-breadcrumb class="file-path">
-				<a-breadcrumb-item><a href="" @click.self.prevent="getDataSource('/')">主目录</a></a-breadcrumb-item>
+				<a-breadcrumb-item><a href="" @click.self.prevent="getDataSource('root')">主目录</a></a-breadcrumb-item>
 				<a-breadcrumb-item v-for="(path, index) of paths" v-bind:key="index"><a href="" @click.self.prevent="handleBreadcrumb(index)">{{ path }}</a></a-breadcrumb-item>
 			</a-breadcrumb>
     </div>
@@ -152,8 +152,8 @@ export default {
 			this.directoryCursor = this.directoryHistory.length - 1
 		},
 		nextOrPrevious(previous, next) {
-			console.log(this.directoryCursor)
-			console.log(this.directoryHistory)
+			/* console.log(this.directoryCursor)
+			console.log(this.directoryHistory) */
 			if (previous && this.directoryHistory.length >= this.directoryCursor - 1 && this.directoryCursor > 0) { 
 				this.getDataSource(this.directoryHistory[this.directoryCursor - 1])
 				this.directoryCursor--
@@ -169,10 +169,16 @@ export default {
 				this.queryParam.path = path
 			}
 			folder.query(Object.assign(this.queryParam)).then(res => {
-				this.localDataSource = res.folderSub
+				this.localDataSource = res.data.folderSub
 				this.paths = Object.assign({}, this.queryParam).path.split('/').slice(1)
-				this.parentPath = res.parent
+				this.parentPath = res.data.parent
 				this.loading = false
+			}).catch(e => {
+				this.loading = false
+				this.$notification.error({
+					message: '错误提示',
+					description: '当前目录不存在或已删除'
+				})
 			})
 		},
 		rowClick (record, index) {
@@ -196,14 +202,14 @@ export default {
 		handleRename() {
 			this.renameLoading = true
 			var record = this.cacheRecord
-			folder.rename({ 'name': record.name, 'key': record.fileKey, 'path': this.queryParam.path, 'isFolder': record.isFolder }).then(res => {
+			folder.rename({ 'name': record.name, 'key': record.key, 'path': this.queryParam.path, 'isFolder': record.isFolder }).then(res => {
 				this.getDataSource()
 				this.renameLoading = this.renameVisible = false
 			})
 		},
 		handleDelete() {
 			var record = this.cacheRecord
-			folder.deleted({ 'key': record.fileKey, 'isFolder': record.isFolder }).then(res => {
+			folder.deleted({ 'key': record.key, 'isFolder': record.isFolder }).then(res => {
 				this.getDataSource()
 			}).catch(e => {
 				this.$notification.error({
@@ -212,8 +218,9 @@ export default {
 				})
 			})
 		},
+		// 面包屑导航 点击事件
 		handleBreadcrumb(i) {
-			this.getDataSource('/' + this.paths.slice(0, i + 1).join('/'))
+			this.getDataSource('root/' + this.paths.slice(0, i + 1).join('/'))
 		},
 		onUploadClose() {
 			this.$refs.upload.handleClearFileList()
