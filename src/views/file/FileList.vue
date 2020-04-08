@@ -119,7 +119,7 @@ export default {
 			paths: [],
 			parentPath: '',
       queryParam: {
-				path: ''
+				path: 'root'
 			},
 			localDataSource: [],
 			selectedRowKeys: [],
@@ -131,7 +131,7 @@ export default {
 			uploadVisible: false,
 			uploadHandler: attachmentApi.upload,
 			fileIcon: stringType => {
-				if (stringType !== undefined) {
+				if (stringType !== undefined && stringType !== null) {
 					var mediaType = stringType.split('/')[0]
 					console.log(mediaType)
 					if (mediaType === 'image') {
@@ -170,7 +170,8 @@ export default {
 			}
 			folder.query(Object.assign(this.queryParam)).then(res => {
 				this.localDataSource = res.data.folderSub
-				this.paths = Object.assign({}, this.queryParam).path.split('/').slice(1)
+				this.paths = Object.assign({}, this.queryParam).path.split('/')
+				console.log(this.paths)
 				this.parentPath = res.data.parent
 				this.loading = false
 			}).catch(e => {

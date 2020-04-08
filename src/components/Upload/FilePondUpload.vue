@@ -73,14 +73,13 @@ export default {
 		path: {
 		  type: String,
 		  required: false,
-		  default: '/'
+		  default: 'root'
 		}
   },
   data: function() {
     return {
       server: {
         process: (fieldName, file, metadata, load, error, progress, abort) => {
-					console.log(this.path)
           const formData = new FormData()
 					formData.append('path', this.path)
           formData.append(fieldName, file, file.name)
