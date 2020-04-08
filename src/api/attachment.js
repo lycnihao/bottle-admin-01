@@ -1,6 +1,6 @@
 import { axios } from '@/utils/request'
 
-const baseUrl = 'http://localhost:8090/api/admin/attachments'
+const baseUrl = 'http://localhost:8090/api/admin/folder'
 
 const attachmentApi = {}
 
