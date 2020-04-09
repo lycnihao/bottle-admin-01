@@ -10,7 +10,7 @@
 			</div>
       <a-breadcrumb class="file-path">
 				<a-breadcrumb-item><a href="" @click.self.prevent="getDataSource('root')">主目录</a></a-breadcrumb-item>
-				<a-breadcrumb-item v-for="(path, index) of paths" v-bind:key="index"><a href="" @click.self.prevent="handleBreadcrumb(index)">{{ path }}</a></a-breadcrumb-item>
+				<a-breadcrumb-item v-for="(path, index) of paths" v-bind:key="index" v-show="index > 0"><a href="" @click.self.prevent="handleBreadcrumb(index)">{{ path }}</a></a-breadcrumb-item>
 			</a-breadcrumb>
     </div>
 		
@@ -221,7 +221,7 @@ export default {
 		},
 		// 面包屑导航 点击事件
 		handleBreadcrumb(i) {
-			this.getDataSource('root/' + this.paths.slice(0, i + 1).join('/'))
+			this.getDataSource(this.paths.slice(0, i + 1).join('/'))
 		},
 		onUploadClose() {
 			this.$refs.upload.handleClearFileList()
