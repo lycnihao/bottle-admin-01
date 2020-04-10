@@ -136,9 +136,12 @@ export default {
 					console.log(mediaType)
 					if (mediaType === 'image') {
 						return 'picture'
-					}
+					} else
 					if (mediaType === 'video') {
 						return 'play-square'
+					} else
+					if (mediaType === 'audio') {
+						return 'play-circle'
 					}
 				}
 				return 'folder'

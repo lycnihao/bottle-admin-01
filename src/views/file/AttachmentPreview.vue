@@ -28,18 +28,27 @@
 				</d-player>
 			</div>
 		</a-modal>
-		
-		<!-- <a-modal
-		  title="图片预览"
-		  v-model="photoPreviewVisible"
+		<a-modal
+		style="top: 20px;"
+		  v-model="audioPreviewVisible"
 			:footer="null"
 			:maskClosable="false"
 			:maskStyle="{'background-color':'rgba(0, 0, 0, 0)'}"
 			wrapClassName="dplayer-modal"
+			destroyOnClose
+			:closable="false"
+			centered
 		>
-		  <img v-show="photoPreviewVisible" :src="attachment.path" style="width: 100%;"/>
-		</a-modal> -->
-		
+			<div class="dplayer-header" @mousedown="move">
+				<div class="dplayer-header-title">音频播放</div>
+				<div class="dplayer-close" @click="audioPreviewVisible = false">
+					<a-icon type="close" />
+				</div>
+			</div>
+			<div class="dplayer-body">
+				<audio :src="audioOptions.url" controls="controls" style="width: 100%;background-color: #f1f3f4;margin-bottom: -5px;"></audio>
+			</div>
+		</a-modal>
 	</div>
 </template>
 
@@ -72,8 +81,12 @@ export default {
 			previewLoading: true,
 			photoPreviewVisible: false,
 			videoPreviewVisible: false,
+			audioPreviewVisible: false,
 			nonsupportPreviewVisible: false,
 			player: {},
+			audioOptions: {
+				url: ''
+			},
 			videoOptions: {
 			  lang: 'zh-cn',
 			  video: {
@@ -107,6 +120,7 @@ export default {
 				var image = new Image()
 				image.src = this.attachment.path
 				var viewer = new Viewer(image, {
+					navbar: false,
 					hidden() {
 						viewer.destroy()
 						that.photoPreviewVisible = !photoPreviewVisible
@@ -153,7 +167,7 @@ export default {
 		    var prefix = mediaType.split('/')[0]
 		    if (prefix === 'video' || prefix === 'flv') {
 		      // 控制各个组件的显示
-		      this.handlePreviewVisible(false, true, false)
+		      this.handlePreviewVisible(false, true, false, false)
 		
 		      // 去除视频地址后面的参数
 		      var lastIndex = attachment.path.lastIndexOf('?')
@@ -163,16 +177,20 @@ export default {
 		      /* this.$log.debug('video url', path) */
 					console.log('video url:' + path)
 		    } else if (prefix === 'image') {
-		      this.handlePreviewVisible(true, false, false)
+		      this.handlePreviewVisible(true, false, false, false)
+		    } else if (prefix === 'audio') {
+		      this.handlePreviewVisible(false, false, true, false)
+					this.$set(this.audioOptions, 'url', attachment.path)
 		    } else {
-		      this.handlePreviewVisible(false, false, true)
+		      this.handlePreviewVisible(false, false, false, true)
 		    }
 		  }
 		},
-		handlePreviewVisible(photo, video, nonsupport) {
+		handlePreviewVisible(photo, video, audio, nonsupport) {
 		  // 为了更好的使vue监听到组件变化及时刷新,方式修改组件后需要刷新才能显示一下部分
 		  this.$set(this, 'photoPreviewVisible', photo)
 		  this.$set(this, 'videoPreviewVisible', video)
+			this.$set(this, 'audioPreviewVisible', audio)
 		  this.$set(this, 'nonsupportPreviewVisible', nonsupport)
 		}
 	}
