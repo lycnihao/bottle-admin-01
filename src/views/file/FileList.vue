@@ -48,10 +48,11 @@
 					<tbody>
 						<tr 
 							v-for="(data, index) in localDataSource"
-							@click.ctrl="rowClickCtrl(data,index)"
+							@click="rowClick(data,index,$event)"
 							@dblclick="rowDblclick(data)" 
 							@contextmenu="contextmenu(data,$event)" 
 							v-bind:key="data.key"
+							v-bind:class="{active:selectedRow.includes(index)}"
 						>
 							<td class="directory-cell"><span class="file-icon"><a-icon :type="!data.isFolder ? fileIcon(data.mediaType) : 'folder'" /></span><span class="file-name">{{ data.name }}</span></td>
 							<td class="directory-cell">{{ data.size | fileSizeFormat }}</td>
@@ -122,7 +123,7 @@ export default {
 				path: 'root'
 			},
 			localDataSource: [],
-			selectedRowKeys: [],
+			selectedRow: [],
 			loading: true,
 			selectAttachment: {},
 			cacheRecord: undefined,
@@ -134,7 +135,7 @@ export default {
 			fileIcon: stringType => {
 				if (stringType !== undefined && stringType !== null) {
 					var mediaType = stringType.split('/')[0]
-					console.log(mediaType)
+					/* console.log(mediaType) */
 					if (mediaType === 'image') {
 						return 'picture'
 					} else
@@ -178,7 +179,7 @@ export default {
 		},
 		getDataSource(path) {
 			this.loading = true
-			this.selectedRowKeys = []
+			this.selectedRow = []
 			if (path !== undefined) {
 				this.queryParam.path = path
 			}
@@ -196,10 +197,39 @@ export default {
 				})
 			})
 		},
-		rowClickCtrl (record, index) {
-			this.selectedRowKeys.push(index)
-			console.log(record)
-			/* record.active = true */
+		rowClick (record, index, e) {
+			if (e.ctrlKey) {
+				console.log('ctrlKey')
+				var arrIndex = this.selectedRow.indexOf(index)
+				if (this.selectedRow.includes(index) && arrIndex > -1) {
+					this.selectedRow.splice(arrIndex, 1)
+				} else {
+					this.selectedRow.push(index)
+				}
+			} else if (e.shiftKey) {
+				if (this.selectedRow.length === 0 || this.selectedRow.length > 1) {
+					this.selectedRow = []
+					this.selectedRow.push(index)
+				} else {
+					if (this.selectedRow[0] < index) {
+						console.log(this.selectedRow[0])
+						console.log(index)
+						console.log('----')
+						for (var i1 = this.selectedRow[0]; i1 <= index - this.selectedRow[0]; i1++) {
+							console.log(i1)
+							this.selectedRow.push(i1)
+						}
+					}
+					if (this.selectedRow[0] > index) {
+						for (var i2 = this.selectedRow[0]; i2 > this.selectedRow[0] - index; i2--) {
+							this.selectedRow.push(i2)
+						}
+					}
+				}
+			} else {
+				this.selectedRow = []
+				this.selectedRow.push(index)
+			}
 		},
 		rowDblclick (record) {
 			if (record.isFolder !== undefined & record.isFolder) {
@@ -241,9 +271,6 @@ export default {
 		}
   },
 	watch: {
-		selectedRowKeys: function(newValue, oldValue) {
-			console.log(newValue)
-		},
 		uploadVisible: function(newValue, oldValue) {
 		  this.getDataSource()
 		}
