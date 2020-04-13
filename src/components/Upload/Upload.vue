@@ -3,6 +3,7 @@
     <a-upload-dragger
       v-if="draggable"
       :name="name"
+	  :directory="directory"
       :multiple="multiple"
       :accept="accept"
       :customRequest="handleUpload"
@@ -13,10 +14,12 @@
         role="button"
         class="ant-upload ant-upload-btn"
       />
+	  点击选择文件或将文件拖拽到此处
     </a-upload-dragger>
     <a-upload
       v-else
       :name="name"
+	  :directory="directory"
       :multiple="multiple"
       :accept="accept"
       :customRequest="handleUpload"
@@ -54,6 +57,18 @@ export default {
       required: false,
       default: ''
     },
+	directory: {
+	  type: Boolean,
+	  required: false,
+	  default: true
+	},
+	attachOption: {
+	  type: Object,
+	  required: false,
+	  default: function () {
+        return { path: 'root/' }
+      }
+	},
     uploadHandler: {
       type: Function,
       required: true
@@ -64,16 +79,15 @@ export default {
       this.$emit('change', info)
     },
     handleRemove(file) {
-      this.$log.debug('Removed file', file)
       this.$emit('remove', file)
     },
     handleUpload(option) {
-      this.$log.debug('Uploading option', option)
       const CancelToken = axios.CancelToken
       const source = CancelToken.source()
 
       const data = new FormData()
       data.append(this.name, option.file)
+	  data.append('path', this.attachOption.path)
 
       this.uploadHandler(
         data,
@@ -81,25 +95,25 @@ export default {
           if (progressEvent.total > 0) {
             progressEvent.percent = (progressEvent.loaded / progressEvent.total) * 100
           }
-          this.$log.debug('Uploading percent: ', progressEvent.percent)
+		  console.log('Uploading percent: ' + progressEvent.percent)
           option.onProgress(progressEvent)
         },
         source.token,
         option.file
       )
         .then(response => {
-          this.$log.debug('Uploaded successfully', response)
+          console.log('Uploaded successfully', response)
           option.onSuccess(response, option.file)
           this.$emit('success', response, option.file)
         })
         .catch(error => {
-          this.$log.debug('Failed to upload file', error)
+          console.log('Failed to upload file', error)
           option.onError(error, error.response)
           this.$emit('failure', error, option.file)
         })
       return {
         abort: () => {
-          this.$log.debug('Upload operation aborted by the user')
+          console.log('Upload operation aborted by the user')
           source.cancel('Upload operation canceled by the user.')
         }
       }

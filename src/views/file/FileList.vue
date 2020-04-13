@@ -8,24 +8,30 @@
 				<a-button shape="circle" icon="arrow-right" :class="{disable:directoryCursor + 1 >= directoryHistory.length}" @click="nextOrPrevious(false,true)" />
 				<a-button shape="circle" icon="redo" @click="getDataSource(directoryHistory[directoryCursor])" :loading="loading"/>
 			</div>
-      <a-breadcrumb class="file-path">
+			<a-breadcrumb class="file-path">
 				<a-breadcrumb-item><a href="" @click.self.prevent="getDataSource('root')">主目录</a></a-breadcrumb-item>
 				<a-breadcrumb-item v-for="(path, index) of paths" v-bind:key="index" v-show="index > 0"><a href="" @click.self.prevent="handleBreadcrumb(index)">{{ path }}</a></a-breadcrumb-item>
 			</a-breadcrumb>
     </div>
 		
 		<div class="table-operator operator file-operator">
-		  <a-button icon="upload" @click="uploadVisible = true">上传</a-button>
+			<a-dropdown>
+			  <a-menu slot="overlay" @click="handleMenuClick">
+				<a-menu-item key="1">上传文件</a-menu-item>
+				<a-menu-item key="2">上传文件夹</a-menu-item>
+			  </a-menu>
+			  <a-button icon="upload"> 上传 <a-icon type="down" /> </a-button>
+			</a-dropdown>
 			<a-button icon="folder-add" @click="renameVisible = true, cacheRecord = {}">文件夹</a-button>
 		  <a-dropdown>
-		    <a-menu slot="overlay">
-		      <a-menu-item key="1"><a-icon type="delete" />删除</a-menu-item>
-		      <!-- lock | unlock -->
-		      <a-menu-item key="2"><a-icon type="lock" />锁定</a-menu-item>
-		    </a-menu>
-		    <a-button style="margin-left: 8px">
-		      更多 <a-icon type="down" />
-		    </a-button>
+			<a-menu slot="overlay">
+			  <a-menu-item key="1"><a-icon type="delete" />删除</a-menu-item>
+			  <!-- lock | unlock -->
+			  <a-menu-item key="2"><a-icon type="lock" />锁定</a-menu-item>
+			</a-menu>
+			<a-button style="margin-left: 8px">
+			  更多 <a-icon type="down" />
+			</a-button>
 		  </a-dropdown>
 		</div>
 		
@@ -42,13 +48,12 @@
 					<tbody>
 						<tr 
 							v-for="(data, index) in localDataSource"
-							@click="rowClick(data,index)"
+							@click.ctrl="rowClickCtrl(data,index)"
 							@dblclick="rowDblclick(data)" 
 							@contextmenu="contextmenu(data,$event)" 
-							v-bind:key="data.key" 
-							v-bind:class="{ 'active' : data.active }"
+							v-bind:key="data.key"
 						>
-							<td class="directory-cell"><span class="file-icon"><a-icon :type="fileIcon(data.mediaType)" /></span><span class="file-name">{{ data.name }}</span></td>
+							<td class="directory-cell"><span class="file-icon"><a-icon :type="!data.isFolder ? fileIcon(data.mediaType) : 'folder'" /></span><span class="file-name">{{ data.name }}</span></td>
 							<td class="directory-cell">{{ data.size | fileSizeFormat }}</td>
 							<td class="directory-cell">{{ data.createTime | moment }}</td>
 						</tr>
@@ -60,25 +65,20 @@
 		  title="上传附件"
 		  v-model="uploadVisible"
 		  :footer="null"
-		  :afterClose="onUploadClose"
 		  destroyOnClose
 		>
-		  <FilePondUpload
-		    ref="upload"
-				:path="paths.join('/')"
-		    :uploadHandler="uploadHandler"
-		  ></FilePondUpload>
+			<Upload :uploadHandler="uploadHandler" :attachOption="{path: paths.join('/')}" :directory="uploadDirectory" :multiple="true"></Upload>
 		</a-modal>
 		
 		<a-modal
-      title="重命名文件夹"
-      :visible="renameVisible"
-      @ok="handleRename"
-      :confirmLoading="renameLoading"
-      @cancel="renameVisible = false"
-    >
-      <a-input size="large" placeholder="文件名称" v-if="renameVisible" v-model="cacheRecord.name" />
-    </a-modal>
+		  title="重命名文件夹"
+		  :visible="renameVisible"
+		  @ok="handleRename"
+		  :confirmLoading="renameLoading"
+		  @cancel="renameVisible = false"
+		>
+			<a-input size="large" placeholder="文件名称" v-if="renameVisible" v-model="cacheRecord.name" />
+		</a-modal>
 		
 		<AttachmentPreview 
 			ref="attachmentPreview"
@@ -97,14 +97,14 @@
 
 <script>
 import { mixin, mixinDevice } from '@/utils/mixin.js'
-import FilePondUpload from '@/components/Upload/FilePondUpload'
+import Upload from '@/components/Upload/Upload'
 import attachmentApi from '@/api/attachment'
 import folder from '@/api/folder'
 import AttachmentPreview from '@/views/file/AttachmentPreview'
 export default {
   name: 'TableList',
 	components: {
-		FilePondUpload:	FilePondUpload,
+		Upload: Upload,
 		AttachmentPreview: AttachmentPreview
 	},
 	mixins: [mixin, mixinDevice],
@@ -118,7 +118,7 @@ export default {
 			directoryCursor: 0,
 			paths: [],
 			parentPath: '',
-      queryParam: {
+			queryParam: {
 				path: 'root'
 			},
 			localDataSource: [],
@@ -129,6 +129,7 @@ export default {
 			renameVisible: false,
 			renameLoading: false,
 			uploadVisible: false,
+			uploadDirectory: false,
 			uploadHandler: attachmentApi.upload,
 			fileIcon: stringType => {
 				if (stringType !== undefined && stringType !== null) {
@@ -144,11 +145,20 @@ export default {
 						return 'play-circle'
 					}
 				}
-				return 'folder'
+				return 'file'
 			}
     }
   },
   methods: {
+		handleMenuClick(e) {
+			if (e.key === '1') {
+				this.uploadVisible = true
+				this.uploadDirectory = false
+			} else {
+				this.uploadDirectory = this.uploadVisible = true
+			}
+		  console.log('click', e)
+		},
 		toParentPath() {
 			this.getDataSource(this.parentPath)
 			this.directoryHistory.splice(this.directoryCursor + 1, this.directoryHistory.length - this.directoryCursor, this.parentPath)
@@ -168,6 +178,7 @@ export default {
 		},
 		getDataSource(path) {
 			this.loading = true
+			this.selectedRowKeys = []
 			if (path !== undefined) {
 				this.queryParam.path = path
 			}
@@ -185,8 +196,10 @@ export default {
 				})
 			})
 		},
-		rowClick (record, index) {
-			record.active = true
+		rowClickCtrl (record, index) {
+			this.selectedRowKeys.push(index)
+			console.log(record)
+			/* record.active = true */
 		},
 		rowDblclick (record) {
 			if (record.isFolder !== undefined & record.isFolder) {
@@ -199,7 +212,7 @@ export default {
 		},
 		contextmenu (record, event) {
 			this.cacheRecord = Object.assign({}, record)
-			this.$refs.contextmenu.show({	top: event.clientY,	left: event.clientX	})
+			this.$refs.contextmenu.show({	top: event.pageY, left: event.pageX })
 			window.event.returnValue	=	false
 			return false
 		},
@@ -225,12 +238,12 @@ export default {
 		// 面包屑导航 点击事件
 		handleBreadcrumb(i) {
 			this.getDataSource(this.paths.slice(0, i + 1).join('/'))
-		},
-		onUploadClose() {
-			this.$refs.upload.handleClearFileList()
 		}
   },
 	watch: {
+		selectedRowKeys: function(newValue, oldValue) {
+			console.log(newValue)
+		},
 		uploadVisible: function(newValue, oldValue) {
 		  this.getDataSource()
 		}
