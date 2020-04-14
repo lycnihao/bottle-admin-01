@@ -82,6 +82,19 @@
 			<a-input size="large" placeholder="文件名称" v-if="renameVisible" v-model="cacheRecord.name" />
 		</a-modal>
 		
+		<a-modal
+		title="复制到"
+		:visible="moveOrCopyVisible"
+		@cancel="moveOrCopyVisible = false"
+		>
+			<a-directory-tree 
+			multiple 
+			defaultExpandAll
+			 :treeData="treeData"
+			 :replaceFields="{children: 'child',title: 'name'}">
+			</a-directory-tree>
+		</a-modal>
+		
 		<AttachmentPreview 
 			ref="attachmentPreview"
 			v-if="selectAttachment"
@@ -90,12 +103,12 @@
 		</AttachmentPreview>
 		
 		<v-contextmenu ref="contextmenu">
-			<v-contextmenu-item>打开</v-contextmenu-item>
+			<v-contextmenu-item @click="rowDblclick(cacheRecord)">打开</v-contextmenu-item>
 			<v-contextmenu-item>下载</v-contextmenu-item>
 			<v-contextmenu-item divider></v-contextmenu-item>
 			<v-contextmenu-item>分享</v-contextmenu-item>
 			<v-contextmenu-item divider></v-contextmenu-item>
-			<v-contextmenu-item>复制到</v-contextmenu-item>
+			<v-contextmenu-item @click="moveOrCopyHandle">复制到</v-contextmenu-item>
 			<v-contextmenu-item>移动到</v-contextmenu-item>
 			<!-- <v-contextmenu-item @click="renameVisible = true, cacheRecord = {}">新建文件夹</v-contextmenu-item> -->
 			<v-contextmenu-item divider></v-contextmenu-item>
@@ -132,6 +145,7 @@ export default {
 				path: 'root'
 			},
 			localDataSource: [],
+			treeData: [],
 			selectedRow: [],
 			loading: true,
 			selectAttachment: {},
@@ -140,6 +154,7 @@ export default {
 			renameLoading: false,
 			uploadVisible: false,
 			uploadDirectory: false,
+			moveOrCopyVisible: false,
 			uploadHandler: attachmentApi.upload,
 			fileIcon: stringType => {
 				if (stringType !== undefined && stringType !== null) {
@@ -160,6 +175,12 @@ export default {
     }
   },
   methods: {
+		moveOrCopyHandle() {
+			folder.getFolderNode().then(res => {
+				this.treeData = res
+			})
+			this.moveOrCopyVisible = true
+		},
 		handleMenuClick(e) {
 			if (e.key === '1') {
 				this.uploadVisible = true

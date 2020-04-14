@@ -12,6 +12,14 @@ folderApi.query = params => {
   })
 }
 
+folderApi.getFolderNode = params => {
+  return axios({
+    url: baseUrl + '/getFolderNode',
+		params: params,
+    method: 'get'
+  })
+}
+
 folderApi.deleted = params => {
   return axios({
     url: baseUrl,
