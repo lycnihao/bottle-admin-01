@@ -15,24 +15,25 @@
     </div>
 		
 		<div class="table-operator operator file-operator">
-			<a-dropdown>
-			  <a-menu slot="overlay" @click="handleMenuClick">
-				<a-menu-item key="1">上传文件</a-menu-item>
-				<a-menu-item key="2">上传文件夹</a-menu-item>
-			  </a-menu>
-			  <a-button icon="upload"> 上传 <a-icon type="down" /> </a-button>
-			</a-dropdown>
-			<a-button icon="folder-add" @click="renameVisible = true, cacheRecord = {}">文件夹</a-button>
-		  <a-dropdown>
-			<a-menu slot="overlay">
-			  <a-menu-item key="1"><a-icon type="delete" />删除</a-menu-item>
-			  <!-- lock | unlock -->
-			  <a-menu-item key="2"><a-icon type="lock" />锁定</a-menu-item>
-			</a-menu>
-			<a-button style="margin-left: 8px">
-			  更多 <a-icon type="down" />
-			</a-button>
-		  </a-dropdown>
+			<div>
+				<a-dropdown>
+				  <a-menu slot="overlay" @click="handleMenuClick">
+					<a-menu-item key="1">上传文件</a-menu-item>
+					<a-menu-item key="2">上传文件夹</a-menu-item>
+				  </a-menu>
+				  <a-button icon="upload"> 上传 <a-icon type="down" /> </a-button>
+				</a-dropdown>
+				<a-button icon="folder-add" @click="renameVisible = true, cacheRecord = {}">文件夹</a-button>
+				<a-button-group>
+				  <a-button icon="share-alt">分享</a-button>
+				  <a-button icon="download">下载</a-button>
+				  <a-button icon="edit">重命名</a-button>
+				  <a-button icon="copy">复制到</a-button>
+				  <a-button icon="arrow-right">移动到</a-button>
+				  <a-button icon="delete">删除</a-button>
+				</a-button-group>
+			</div>
+			<div></div>
 		</div>
 		
 		<a-spin :spinning="loading">
@@ -89,7 +90,15 @@
 		</AttachmentPreview>
 		
 		<v-contextmenu ref="contextmenu">
-			<v-contextmenu-item @click="renameVisible = true, cacheRecord = {}">新建文件夹</v-contextmenu-item>
+			<v-contextmenu-item>打开</v-contextmenu-item>
+			<v-contextmenu-item>下载</v-contextmenu-item>
+			<v-contextmenu-item divider></v-contextmenu-item>
+			<v-contextmenu-item>分享</v-contextmenu-item>
+			<v-contextmenu-item divider></v-contextmenu-item>
+			<v-contextmenu-item>复制到</v-contextmenu-item>
+			<v-contextmenu-item>移动到</v-contextmenu-item>
+			<!-- <v-contextmenu-item @click="renameVisible = true, cacheRecord = {}">新建文件夹</v-contextmenu-item> -->
+			<v-contextmenu-item divider></v-contextmenu-item>
 			<v-contextmenu-item @click="renameVisible = true">重命名</v-contextmenu-item>
 			<v-contextmenu-item @click="handleDelete">删除</v-contextmenu-item>
 		</v-contextmenu>
@@ -198,6 +207,8 @@ export default {
 			})
 		},
 		rowClick (record, index, e) {
+			// 阻止文本被选择
+			window.getSelection ? window.getSelection().removeAllRanges() : document.selection.empty()
 			if (e.ctrlKey) {
 				console.log('ctrlKey')
 				var arrIndex = this.selectedRow.indexOf(index)
@@ -207,24 +218,17 @@ export default {
 					this.selectedRow.push(index)
 				}
 			} else if (e.shiftKey) {
-				if (this.selectedRow.length === 0 || this.selectedRow.length > 1) {
-					this.selectedRow = []
-					this.selectedRow.push(index)
-				} else {
-					if (this.selectedRow[0] < index) {
-						console.log(this.selectedRow[0])
-						console.log(index)
-						console.log('----')
-						for (var i1 = this.selectedRow[0]; i1 <= index - this.selectedRow[0]; i1++) {
-							console.log(i1)
-							this.selectedRow.push(i1)
-						}
+				if (this.selectedRow[0] < index) {
+					for (var i1 = 1; i1 <= index - this.selectedRow[0]; i1++) {
+						this.selectedRow.push(this.selectedRow[0] + i1)
 					}
-					if (this.selectedRow[0] > index) {
-						for (var i2 = this.selectedRow[0]; i2 > this.selectedRow[0] - index; i2--) {
-							this.selectedRow.push(i2)
-						}
+					console.log(this.selectedRow)
+				}
+				if (this.selectedRow[0] > index) {
+					for (var i2 = 0; i2 < this.selectedRow[0] - index; i2++) {
+						this.selectedRow.push(index + i2)
 					}
+					console.log(this.selectedRow)
 				}
 			} else {
 				this.selectedRow = []
@@ -288,14 +292,14 @@ export default {
 	
 	.directory-cell {
 		display: table-cell;
-    padding: 16px;
-    font-size: 0.875rem;
-    text-align: left;
-    font-weight: 400;
-    line-height: 1.43;
-    border-bottom: 1px solid rgba(224, 224, 224, 1);
-    letter-spacing: 0.01071em;
-    vertical-align: inherit;
+		padding: 12px;
+		font-size: 0.875rem;
+		text-align: left;
+		font-weight: 400;
+		line-height: 1.43;
+		border-bottom: 1px solid rgba(224, 224, 224, 1);
+		letter-spacing: 0.01071em;
+		vertical-align: inherit;
 	}
 	
 	.directory-head-cell {
@@ -305,11 +309,11 @@ export default {
 	}
 	
 	.directory tbody tr.active {
-		background-color: #f5f7fa;
+		background-color: #f1f3f4;
 	}
 	
 	.directory tbody tr:hover {
-		background-color: #f5f7fa;
+		background-color: #f1f3f4;
 	}
 	
 	
@@ -329,8 +333,13 @@ export default {
   .operator {
     margin-bottom: 18px;
   }
+  
+  .file-operator {
+	display: flex;
+	justify-content: space-between;
+  }
 	
-	.file-operator > .ant-btn{
+	.file-operator > div > .ant-btn{
 		margin-right: 8px;
 	}
 	
