@@ -15,7 +15,7 @@
     </div>
 		
 		<div class="table-operator operator file-operator">
-			<div>
+			<div v-if="selectedRow.length > 0">
 				<a-dropdown>
 				  <a-menu slot="overlay" @click="handleMenuClick">
 					<a-menu-item key="1">上传文件</a-menu-item>
@@ -86,12 +86,15 @@
 		title="复制到"
 		:visible="moveOrCopyVisible"
 		@cancel="moveOrCopyVisible = false"
+		@ok="handleMoveOrCopy"
 		>
 			<a-directory-tree 
 			multiple 
 			defaultExpandAll
 			 :treeData="treeData"
-			 :replaceFields="{children: 'child',title: 'name'}">
+			 :replaceFields="{children: 'child',title: 'name'}"
+			 @select="moveOrCopyClick"
+			 >
 			</a-directory-tree>
 		</a-modal>
 		
@@ -155,6 +158,7 @@ export default {
 			uploadVisible: false,
 			uploadDirectory: false,
 			moveOrCopyVisible: false,
+			moveOrCopyKey: '',
 			uploadHandler: attachmentApi.upload,
 			fileIcon: stringType => {
 				if (stringType !== undefined && stringType !== null) {
@@ -289,6 +293,28 @@ export default {
 					description: '当前目录下存在文件或文件夹'
 				})
 			})
+		},
+		moveOrCopyClick(selectedKeys, info) {
+			console.log(info)
+			this.moveOrCopyKey = selectedKeys.toString()
+		},
+		handleMoveOrCopy() {
+			if (this.moveOrCopyKey === '') {
+				this.$notification.error({
+					message: '错误提示',
+					description: '请选择目录后再继续操作'
+				})
+				return
+			}
+			var keys = []
+			for (var i = 0; i < this.selectedRow.length; i++) {
+				keys.push(this.localDataSource[this.selectedRow[i]].key)
+			}
+			folder.moveTo({ 'parentKey': this.moveOrCopyKey, 'keys': keys.toString() }).then(res => {
+				this.getDataSource()
+				this.moveOrCopyVisible = false
+			}).catch(e => { console.log(e) })
+			console.log(this.moveOrCopyKey)
 		},
 		// 面包屑导航 点击事件
 		handleBreadcrumb(i) {

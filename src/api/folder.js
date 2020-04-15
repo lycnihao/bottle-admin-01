@@ -20,6 +20,14 @@ folderApi.getFolderNode = params => {
   })
 }
 
+folderApi.moveTo = params => {
+  return axios({
+    url: baseUrl + '/moveto',
+		params: params,
+    method: 'post'
+  })
+}
+
 folderApi.deleted = params => {
   return axios({
     url: baseUrl,
