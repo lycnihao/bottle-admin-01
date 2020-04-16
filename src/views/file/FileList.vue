@@ -83,7 +83,7 @@
 		</a-modal>
 		
 		<a-modal
-		title="复制到"
+		:title="moveOrCopyType === 'move' ? '移动到' : '复制到'"
 		:visible="moveOrCopyVisible"
 		@cancel="moveOrCopyVisible = false"
 		@ok="handleMoveOrCopy"
@@ -111,8 +111,8 @@
 			<v-contextmenu-item divider></v-contextmenu-item>
 			<v-contextmenu-item>分享</v-contextmenu-item>
 			<v-contextmenu-item divider></v-contextmenu-item>
-			<v-contextmenu-item @click="moveOrCopyHandle">复制到</v-contextmenu-item>
-			<v-contextmenu-item>移动到</v-contextmenu-item>
+			<v-contextmenu-item @click="moveOrCopyHandle('copy')">复制到</v-contextmenu-item>
+			<v-contextmenu-item @click="moveOrCopyHandle('move')">移动到</v-contextmenu-item>
 			<!-- <v-contextmenu-item @click="renameVisible = true, cacheRecord = {}">新建文件夹</v-contextmenu-item> -->
 			<v-contextmenu-item divider></v-contextmenu-item>
 			<v-contextmenu-item @click="renameVisible = true">重命名</v-contextmenu-item>
@@ -158,6 +158,7 @@ export default {
 			uploadVisible: false,
 			uploadDirectory: false,
 			moveOrCopyVisible: false,
+			moveOrCopyType: '',
 			moveOrCopyKey: '',
 			uploadHandler: attachmentApi.upload,
 			fileIcon: stringType => {
@@ -179,7 +180,8 @@ export default {
     }
   },
   methods: {
-		moveOrCopyHandle() {
+		moveOrCopyHandle(type) {
+			this.moveOrCopyType = type
 			folder.getFolderNode().then(res => {
 				this.treeData = res
 			})
@@ -310,11 +312,17 @@ export default {
 			for (var i = 0; i < this.selectedRow.length; i++) {
 				keys.push(this.localDataSource[this.selectedRow[i]].key)
 			}
-			folder.moveTo({ 'parentKey': this.moveOrCopyKey, 'keys': keys.toString() }).then(res => {
-				this.getDataSource()
-				this.moveOrCopyVisible = false
-			}).catch(e => { console.log(e) })
-			console.log(this.moveOrCopyKey)
+			if (this.moveOrCopyType === 'move') {
+				folder.moveTo({ 'parentKey': this.moveOrCopyKey, 'keys': keys.toString() }).then(res => {
+					this.getDataSource()
+					this.moveOrCopyVisible = false
+				}).catch(e => { console.log(e) })
+			} else {
+				folder.copyTo({ 'parentKey': this.moveOrCopyKey, 'keys': keys.toString() }).then(res => {
+					this.getDataSource()
+					this.moveOrCopyVisible = false
+				}).catch(e => { console.log(e) })
+			}
 		},
 		// 面包屑导航 点击事件
 		handleBreadcrumb(i) {
@@ -382,6 +390,7 @@ export default {
   }
   
   .file-operator {
+	height: 25px;
 	display: flex;
 	justify-content: space-between;
   }
